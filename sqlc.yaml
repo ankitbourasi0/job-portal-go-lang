@@ -1,10 +1,10 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "query.sql"
-    schema: "schema.sql"
+    queries: "sql/queries" #pick queries from here and generate in internal/database
+    schema: "sql/schema"
     gen:
       go:
-        package: "github.com/ankitbourasi0/job-portal"
-        out: "tutorial"
+        package: "database"
+        out: "internal/database" #code generate here
         sql_package: "pgx/v5"

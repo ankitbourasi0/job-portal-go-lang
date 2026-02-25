@@ -30,3 +30,6 @@ go.work
 
 # Go module cache
 # .go/
+
+
+.env
