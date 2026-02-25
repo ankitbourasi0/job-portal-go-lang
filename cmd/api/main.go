@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/ankitbourasi0/job-portal/internal/database"
+	"github.com/ankitbourasi0/job-portal/internal/handler"
+	"github.com/ankitbourasi0/job-portal/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -33,10 +35,19 @@ func main() {
 		port = "8080"
 	}
 
+	// SQLC Queries initialize karein
+	queries := database.New(db)
+
+	//Initialize Repository & Handler
+	jobRepo := repository.NewJobRepository(queries)
+	jobHandler := &handler.JobHandler{Repo: jobRepo}
+
 	router := chi.NewRouter()
-	//essential middlewares
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+
+	// API Route
+	router.Post("/api/jobs", jobHandler.HandleCreateJob)
 
 	//Health Check Routes
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
