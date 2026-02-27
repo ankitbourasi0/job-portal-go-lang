@@ -51,6 +51,7 @@ func main() {
 	router.Get("/api/jobs", jobHandler.HandleGetAllJob)
 	router.Get("/api/jobs/{id}", jobHandler.HandleGetJobById)
 	router.Put("/api/jobs/{id}", jobHandler.HandleUpdateJobById)
+	router.Put("/api/jobs/partial-update/{id}", jobHandler.HandlePartialUpdateJob)
 
 	//Health Check Routes
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
