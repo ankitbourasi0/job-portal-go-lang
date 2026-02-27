@@ -49,6 +49,7 @@ func main() {
 	// API Route
 	router.Post("/api/jobs", jobHandler.HandleCreateJob)
 	router.Get("/api/jobs", jobHandler.HandleGetAllJob)
+	router.Get("/api/jobs/{id}", jobHandler.HandleGetJobById)
 
 	//Health Check Routes
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
