@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -45,7 +46,18 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	//Cors configuration
+	c := cors.New(cors.Options{ //Next.js frontend URL local
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, //preflight request cache
+	})
 
+	router.Use(c.Handler)
+	//----------------------------------------------------------------------
 	// API Route
 	router.Post("/api/jobs", jobHandler.HandleCreateJob)
 	router.Get("/api/jobs", jobHandler.HandleGetAllJob)
