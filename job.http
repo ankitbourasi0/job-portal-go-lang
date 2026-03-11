@@ -1,5 +1,69 @@
-### GET request to example server
-GET https://examples.http-client.intellij.net/get
-    ?generated-in=GoLand
 
-###
+### Create Job
+POST http://localhost:8080/api/jobs
+Content-Type: application/json
+
+{
+  "title": "Senior Backend Engineer (Go)",
+  "job_role": "Backend Developer",
+  "job_category": "Software Engineering",
+  "company_name": "Refine Tech",
+  "location": "Pune (Remote)",
+  "salary": "15 - 25 LPA",
+  "qualification": "B.Tech/MCA",
+  "experience": "3+ Years",
+  "last_date": "2026-03-30",
+  "description": "<h2>Responsibilities:</h2><ul><li>Build <b>Scalable APIs</b> using Go and Chi.</li><li>Write <i>Optimized SQL</i> with SQLC.</li></ul><h3>Requirements:</h3><p>Knowledge of <u>PostgreSQL</u> is a must.</p>",
+  "apply_url": "https://refine-journal.com/careers"
+}
+
+### Get All Job
+GET http://localhost:8080/api/jobs
+
+### Job By ID
+GET http://localhost:8080/api/jobs/4ddca8fb-15d0-4077-bc95-f3b118331993
+
+### Update Job by ID
+PUT http://localhost:8080/api/jobs/4ddca8fb-15d0-4077-bc95-f3b118331993
+Content-Type: application/json
+
+{
+  "title": "Senior Backend Engineer (Java)",
+  "job_role": "Backend Developer",
+  "job_category": "Software Engineering",
+  "company_name": "Pune Tech",
+  "location": "Pune (Onsite)",
+  "salary": "15 - 25 LPA",
+  "qualification": "B.Tech/MCA",
+  "experience": "3+ Years",
+  "last_date": "2026-03-30",
+  "description": "<h2>Responsibilities:</h2><ul><li>Build <b>Scalable APIs</b> using Go and Chi.</li><li>Write <i>Optimized SQL</i> with SQLC.</li></ul><h3>Requirements:</h3><p>Knowledge of <u>PostgreSQL</u> is a must.</p>",
+  "apply_url": "https://refine-journal.com/careers"
+}
+
+### Partial Update Job by ID
+PATCH http://localhost:8080/api/jobs/partial-update/92688672-c9c9-4b7b-b3e0-f6665210111c
+Content-Type: application/json
+
+{
+  "title": "Associate ML Engineer",
+  "job_role": "ML Engineer",
+  "job_category": "AI/ML",
+  "salary" : "15 LPA",
+  "qualification" : "BTECH",
+  "location" : "Mumbai"
+}
+
+
+### Get Jobs By Location
+GET http://localhost:8080/api/jobs/search?location=mumbai
+
+### Get All Location
+GET http://localhost:8080/api/jobs/location
+
+
+### Get Jobs By Title and Location
+GET http://localhost:8080/api/jobs/search-by-title-and-location?title=go&location=
+
+
+

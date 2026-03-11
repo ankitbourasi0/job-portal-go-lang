@@ -114,12 +114,331 @@ func (q *Queries) GetAllJobs(ctx context.Context) ([]Job, error) {
 	return items, nil
 }
 
-const geyJobById = `-- name: GeyJobById :one
+const getAllLocation = `-- name: GetAllLocation :many
+SELECT DISTINCT location --Distinct means get unique records
+FROM jobs
+WHERE is_active =true
+ORDER BY  location ASC
+`
+
+func (q *Queries) GetAllLocation(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllLocation)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var location string
+		if err := rows.Scan(&location); err != nil {
+			return nil, err
+		}
+		items = append(items, location)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getJobById = `-- name: GetJobById :one
 SELECT id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active FROM jobs WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GeyJobById(ctx context.Context, id pgtype.UUID) (Job, error) {
-	row := q.db.QueryRow(ctx, geyJobById, id)
+func (q *Queries) GetJobById(ctx context.Context, id pgtype.UUID) (Job, error) {
+	row := q.db.QueryRow(ctx, getJobById, id)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+		&i.JobRole,
+		&i.JobCategory,
+		&i.CompanyName,
+		&i.Location,
+		&i.Salary,
+		&i.Qualification,
+		&i.Experience,
+		&i.LastDate,
+		&i.Description,
+		&i.ApplyUrl,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const getJobsByLocation = `-- name: GetJobsByLocation :many
+SELECT id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active FROM jobs
+WHERE location ILIKE '%' || $1 || '%' --this '%' and ILIKE actually means case senstive and search data from multiwords
+AND is_active = true
+`
+
+func (q *Queries) GetJobsByLocation(ctx context.Context, dollar_1 pgtype.Text) ([]Job, error) {
+	rows, err := q.db.Query(ctx, getJobsByLocation, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Job
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.JobRole,
+			&i.JobCategory,
+			&i.CompanyName,
+			&i.Location,
+			&i.Salary,
+			&i.Qualification,
+			&i.Experience,
+			&i.LastDate,
+			&i.Description,
+			&i.ApplyUrl,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getJobsWithPagination = `-- name: GetJobsWithPagination :many
+SELECT id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active FROM jobs
+WHERE is_active = true
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetJobsWithPaginationParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetJobsWithPagination(ctx context.Context, arg GetJobsWithPaginationParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, getJobsWithPagination, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Job
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.JobRole,
+			&i.JobCategory,
+			&i.CompanyName,
+			&i.Location,
+			&i.Salary,
+			&i.Qualification,
+			&i.Experience,
+			&i.LastDate,
+			&i.Description,
+			&i.ApplyUrl,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalCount = `-- name: GetTotalCount :one
+
+SELECT COUNT(*) FROM jobs WHERE is_active = true
+`
+
+// Limit tells how many records need to get e.g. 10
+func (q *Queries) GetTotalCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const partialUpdateJob = `-- name: PartialUpdateJob :one
+UPDATE jobs
+SET
+    title = COALESCE($2, title), --Coalesce fn skip the column if value is null comed, otherwise update , helpful in patch
+    job_role = COALESCE($3, job_role),
+    job_category = COALESCE($4, job_category),
+    company_name = COALESCE($5, company_name),
+    location = COALESCE($6, location),
+    salary = COALESCE($7, salary),
+    qualification = COALESCE($8, qualification),
+    experience = COALESCE($9, experience),
+    last_date = COALESCE($10, last_date),
+    description = COALESCE($11, description),
+    apply_url = COALESCE($12, apply_url),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active
+`
+
+type PartialUpdateJobParams struct {
+	ID            pgtype.UUID
+	Title         pgtype.Text
+	JobRole       pgtype.Text
+	JobCategory   pgtype.Text
+	CompanyName   pgtype.Text
+	Location      pgtype.Text
+	Salary        pgtype.Text
+	Qualification pgtype.Text
+	Experience    pgtype.Text
+	LastDate      pgtype.Text
+	Description   pgtype.Text
+	ApplyUrl      pgtype.Text
+}
+
+func (q *Queries) PartialUpdateJob(ctx context.Context, arg PartialUpdateJobParams) (Job, error) {
+	row := q.db.QueryRow(ctx, partialUpdateJob,
+		arg.ID,
+		arg.Title,
+		arg.JobRole,
+		arg.JobCategory,
+		arg.CompanyName,
+		arg.Location,
+		arg.Salary,
+		arg.Qualification,
+		arg.Experience,
+		arg.LastDate,
+		arg.Description,
+		arg.ApplyUrl,
+	)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+		&i.JobRole,
+		&i.JobCategory,
+		&i.CompanyName,
+		&i.Location,
+		&i.Salary,
+		&i.Qualification,
+		&i.Experience,
+		&i.LastDate,
+		&i.Description,
+		&i.ApplyUrl,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const searchJobs = `-- name: SearchJobs :many
+SELECT id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active FROM jobs
+WHERE (title ILIKE '%' || $1::text || '%')
+    AND (location ILIKE '%' || $2::text || '%')
+    AND is_active =true
+ORDER BY created_at DESC
+`
+
+type SearchJobsParams struct {
+	Title    string
+	Location string
+}
+
+func (q *Queries) SearchJobs(ctx context.Context, arg SearchJobsParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, searchJobs, arg.Title, arg.Location)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Job
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.JobRole,
+			&i.JobCategory,
+			&i.CompanyName,
+			&i.Location,
+			&i.Salary,
+			&i.Qualification,
+			&i.Experience,
+			&i.LastDate,
+			&i.Description,
+			&i.ApplyUrl,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateJobById = `-- name: UpdateJobById :one
+UPDATE jobs
+SET
+    title = $2,
+    job_role = $3,
+    job_category = $4,
+    company_name = $5,
+    location = $6,
+    salary = $7,
+    qualification = $8,
+    experience = $9,
+    last_date = $10,
+    description = $11,
+    apply_url = $12,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, title, job_role, job_category, company_name, location, salary, qualification, experience, last_date, description, apply_url, is_active
+`
+
+type UpdateJobByIdParams struct {
+	ID            pgtype.UUID
+	Title         string
+	JobRole       string
+	JobCategory   pgtype.Text
+	CompanyName   string
+	Location      string
+	Salary        pgtype.Text
+	Qualification string
+	Experience    string
+	LastDate      string
+	Description   string
+	ApplyUrl      string
+}
+
+func (q *Queries) UpdateJobById(ctx context.Context, arg UpdateJobByIdParams) (Job, error) {
+	row := q.db.QueryRow(ctx, updateJobById,
+		arg.ID,
+		arg.Title,
+		arg.JobRole,
+		arg.JobCategory,
+		arg.CompanyName,
+		arg.Location,
+		arg.Salary,
+		arg.Qualification,
+		arg.Experience,
+		arg.LastDate,
+		arg.Description,
+		arg.ApplyUrl,
+	)
 	var i Job
 	err := row.Scan(
 		&i.ID,

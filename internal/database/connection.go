@@ -1,25 +1,18 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq" // Postgres driver
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func InitDB(dbURL string) *sql.DB {
+func InitDB(dbURL string) *pgxpool.Pool {
 	dbUrlWithDisableSSL := fmt.Sprintf("%s?sslmode=disable", dbURL)
-	db, err := sql.Open("postgres", dbUrlWithDisableSSL)
+	pool, err := pgxpool.New(context.Background(), dbUrlWithDisableSSL)
 	if err != nil {
 		log.Fatal("Cannot connect to the Database: ", err)
 	}
-
-	//check connection
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Database Ping failed: ", err)
-	}
-
-	return db
+	return pool
 }

@@ -39,9 +39,13 @@ func main() {
 	// SQLC Queries initialize karein
 	queries := database.New(db)
 
-	//Initialize Repository & Handler
+	//Initialize Job Repository & Handler
 	jobRepo := repository.NewJobRepository(queries)
 	jobHandler := &handler.JobHandler{Repo: jobRepo}
+
+	//Initialize Guest Repository & Handler
+	guestRepo := repository.NewGuestRepository(queries)
+	guestHandler := &handler.GuestHandler{Repo: guestRepo}
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -63,10 +67,15 @@ func main() {
 	router.Get("/api/jobs", jobHandler.HandleGetAllJob)
 	router.Get("/api/jobs/{id}", jobHandler.HandleGetJobById)
 	router.Put("/api/jobs/{id}", jobHandler.HandleUpdateJobById)
-	router.Put("/api/jobs/partial-update/{id}", jobHandler.HandlePartialUpdateJob)
+	router.Patch("/api/jobs/partial-update/{id}", jobHandler.HandlePartialUpdateJob)
 	router.Get("/api/jobs/search", jobHandler.HandleGetJobsByLocation)
 	router.Get("/api/jobs/location", jobHandler.HandleGetAllLocation)
 	router.Get("/api/jobs/search-by-title-and-location", jobHandler.HandleSearchJobs)
+
+	//=====================================================================
+	//Guest
+	//Feature #1 - ATS Score
+	router.Post("/guest/analyze", guestHandler.HandleAnalyzeResumeForAtsScore)
 
 	//Health Check Routes
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
