@@ -11,6 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728 // indirect
 	github.com/lib/pq v1.11.2 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	golang.org/x/sync v0.17.0 // indirect
